@@ -64,7 +64,8 @@ def batch_generator(data, batch_size):
     batch_count = 0
     while True:
         if (batch_count+1) * batch_size > data[0].shape[0]:
-            perm_index = np.randompermutation(data[0].shape[0])
+            batch_count = 0
+            perm_index = np.random.permutation(data[0].shape[0])
             shuffled_data = [d[perm_index] for d in shuffled_data]
 
         start_index = batch_count * batch_size

@@ -131,6 +131,8 @@ class DANN_Model():
                 data_label = np.vstack([s_label, t_label])
                 feed_dict = {self.x:data_x, self.label:data_label, self.domain:domain_label, self.is_training:True}
                 _, loss_, label_acc, domain_acc = self.sess.run([self.dann_train_op, self.total_loss, self.label_accuracy, self.domain_accuracy], feed_dict=feed_dict)
+          
+            print('Epoch %d, label accuracy: %3.4f, loss: %3.4f' % (epoch+1, label_acc, loss_))             
 
             if (epoch+1) % self.args.eval_interval == 0:
                 self.evaluate()
