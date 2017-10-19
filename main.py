@@ -4,7 +4,7 @@ import argparse
 import os
 from dann_model import DANN_Model
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def main():
     parser = argparse.ArgumentParser()
@@ -13,7 +13,7 @@ def main():
     parser.add_argument('--model_domain', type=str, default='MNIST')
     parser.add_argument('--final_dim', type=int, default=256)
     parser.add_argument('--num_classes', type=int, default=10)
-    parser.add_argument('--learning_rate', type=float, default=0.01)
+    parser.add_argument('--learning_rate', type=float, default=0.005)
     parser.add_argument('--model_mode', type=str, default='SO') 
     parser.add_argument('--eval_interval', type=int, default=100)
     parser.add_argument('--model_type', type=str, default='DANN')

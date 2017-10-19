@@ -118,9 +118,9 @@ class DANN_Model():
         for epoch in range(self.args.num_epoch):
             # Source only, domain data is not necessary
             if self.args.model_mode == 'SO':
-                source_x, source_label = source_only_batch.next()
-                source_x = (source_x - self.pixel_mean)/255
-                feed_dict = {self.x:source_x, self.label:source_label, self.is_training:True}
+                src_x, src_label = source_only_batch.next()
+                src_x = (src_x - self.pixel_mean)/255
+                feed_dict = {self.x:src_x, self.label:src_label, self.is_training:True}
                 _, loss_, label_acc = self.sess.run([self.regular_train_op, self.classify_loss, self.label_accuracy], feed_dict=feed_dict)
             else:
                 s_x, s_label = source_batch.next()
@@ -139,10 +139,10 @@ class DANN_Model():
             
 
     def evaluate(self):
-        self.mnist_test = (self.mnist_test - self.pixel_mean) / 255
-        self.mnistm_test = (self.mnistm_test - self.pixel_mean) / 255
-        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:self.mnist_test, self.label:self.mnist.test.labels, self.is_training:False})
-        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:self.mnistm_test, self.label:self.mnist.test.labels, self.is_training:False})
+        m_test = (self.mnist_test - self.pixel_mean) / 255
+        mm_test = (self.mnistm_test - self.pixel_mean) / 255
+        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:m_test, self.label:self.mnist.test.labels, self.is_training:False})
+        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:mm_test, self.label:self.mnist.test.labels, self.is_training:False})
         print('Source domain accuracy: %3.4f, Target domain accuracy: %3.4f' % (source_acc, target_acc))
 
 
