@@ -3,7 +3,7 @@ import numpy as np
 import utils
 import pickle
 
-def DANN_Model():
+class DANN_Model():
     def __init__(self, args, sess, name=None):
         self.args = args
         self.sess = sess
@@ -39,6 +39,7 @@ def DANN_Model():
         self.build_dann_model()
 
     def build_dann_model(self):
+        print('Build DANN Model')	
         # Image placeholder
         self.x = tf.placeholder(tf.float32, [None, 28,28,3])
         # Label placeholder(one-hot)
