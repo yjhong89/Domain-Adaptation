@@ -45,9 +45,11 @@ class DANN_Model():
         self.x = tf.placeholder(tf.float32, [None, 28,28,3])
         # Label placeholder(one-hot)
         self.label = tf.placeholder(tf.float32, [None, self.args.num_classes])
+        self.mag = tf.placeholder(tf.float32, [])
         # Domain placeholder(source, target)
         self.domain = tf.placeholder(tf.int32, [None, 2])
         self.is_training = tf.placeholder(tf.bool, [])
+        self.lr = tf.placeholder(tf.float32, [])
 
         '''
             Model is composed of 3 components:
@@ -56,8 +58,9 @@ class DANN_Model():
         with tf.variable_scope('Feature_Extractor'):
             conv1 = utils.conv2d(self.x, output_dim=32, filter_len=5, stride=2, name='conv1', activation=tf.nn.relu)  
             conv2 = utils.conv2d(conv1, output_dim=48, filter_len=5, stride=2, name='conv2', activation=tf.nn.relu)
-            flatten = tf.reshape(conv2, [-1, np.prod(conv2.get_shape().as_list()[1:])])
-            self.feature = utils.fc(flatten, output_dim=self.args.final_dim, name='fc', activation=None)
+            conv3 = utils.conv2d(conv2, output_dim=48, filter_len=3, stride=1, name='conv3', activation=tf.nn.relu)
+            flatten = tf.reshape(conv3, [-1, np.prod(conv2.get_shape().as_list()[1:])])
+            self.feature = utils.fc(flatten, output_dim=self.args.final_dim, name='fc', activation=tf.nn.relu)
 
         with tf.variable_scope('Label_Classify'):
             '''
@@ -79,7 +82,7 @@ class DANN_Model():
 
         with tf.variable_scope('Domain_Discriminator'):
             # Flip the gradient when back-propagating
-            flip_op_feature = self.flip_gradient(self.feature)
+            flip_op_feature = self.flip_gradient(self.feature, self.mag)
 
             fc1_d = utils.fc(flip_op_feature, output_dim=100, name='fc1', activation=tf.nn.relu)
             fc2_d = utils.fc(fc1_d, output_dim=50, name='fc2', activation=tf.nn.relu)
@@ -95,7 +98,9 @@ class DANN_Model():
         self.total_loss = self.classify_loss + self.domain_loss
 
         self.regular_train_op = tf.train.AdamOptimizer(self.args.learning_rate).minimize(self.classify_loss)
-        self.dann_train_op = tf.train.AdamOptimizer(self.args.learning_rate).minimize(self.total_loss)
+        self.dann_train_op = tf.train.AdamOptimizer(self.lr).minimize(self.total_loss)
+        #self.regular_train_op = tf.train.MomentumOptimizer(self.args.learning_rate, 0.9).minimize(self.classify_loss)
+        #self.dann_train_op = tf.train.MomentumOptimizer(self.lr, 0.9).minimize(self.total_loss)
         # tf.equal(x,y) returns boolean, true if x==y
         self.label_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.classify_label, axis=1), tf.argmax(prob, axis=1)), tf.float32))
         self.domain_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.domain, axis=1), tf.argmax(prob_d, axis=1)), tf.float32))
@@ -120,16 +125,19 @@ class DANN_Model():
             if self.args.model_mode == 'SO':
                 src_x, src_label = source_only_batch.next()
                 src_x = (src_x - self.pixel_mean)/255
-                feed_dict = {self.x:src_x, self.label:src_label, self.is_training:True}
+                feed_dict = {self.x:src_x, self.label:src_label, self.is_training:False}
                 _, loss_, label_acc = self.sess.run([self.regular_train_op, self.classify_loss, self.label_accuracy], feed_dict=feed_dict)
             elif self.args.model_mode == 'DA':
+                # Flip gradient magnitude, learning rate according to paper
+                flip_mag = 2/(1+np.exp(-10*(float(epoch)/self.args.num_epoch)))-1
+                learning_r = 0.01 / (1+10*(float(epoch)/self.args.num_epoch))**0.75
                 s_x, s_label = source_batch.next()
                 t_x, t_label = target_batch.next()
     
                 data_x = np.vstack([s_x, t_x])
                 data_x = (data_x - self.pixel_mean)/255
                 data_label = np.vstack([s_label, t_label])
-                feed_dict = {self.x:data_x, self.label:data_label, self.domain:domain_label, self.is_training:True}
+                feed_dict = {self.x:data_x, self.label:data_label, self.domain:domain_label, self.is_training:True, self.mag:flip_mag, self.lr:learning_r}
                 _, loss_, label_acc, domain_acc = self.sess.run([self.dann_train_op, self.total_loss, self.label_accuracy, self.domain_accuracy], feed_dict=feed_dict)
             else:
                 raise Exception('Not supported mode')

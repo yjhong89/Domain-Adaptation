@@ -14,11 +14,10 @@ def main():
     parser.add_argument('--final_dim', type=int, default=256)
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--learning_rate', type=float, default=0.005)
-    parser.add_argument('--model_mode', type=str, default='DA') 
-    parser.add_argument('--eval_interval', type=int, default=100)
+    parser.add_argument('--model_mode', type=str, default='DA')
+    parser.add_argument('--eval_interval', type=int, default=500)
     parser.add_argument('--model_type', type=str, default='DANN')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoint')
-
 
     args = parser.parse_args()
     print(args)

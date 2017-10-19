@@ -11,7 +11,7 @@ class FlipGradient:
         Custom gradients in tensorflow : 
         https://uoguelph-mirg.github.io/tensorflow_gradients/
     '''
-    def __call__(self, x):
+    def __call__(self, x, mag=1.0):
         custom_grad = 'GRL%d' % self.num_calls
         '''
             When adding new ops, tf.RegisterGradient to register a gradient function which computes 
@@ -20,7 +20,7 @@ class FlipGradient:
         '''
         @ops.RegisterGradient(custom_grad)
         def _flip_gradient(op, grad):
-            return [tf.negative(grad) * 1.0]
+            return [tf.negative(grad) * mag]
 
         g = tf.get_default_graph()
         '''
@@ -73,6 +73,6 @@ def batch_generator(data, batch_size):
         batch_count += 1
         # Use Generator and yield grammer in python for large dataset
         # Passing batches when next() is called
-        yield [d[start_index:end_index] for d in shuffled_data]
+        yield [d[start_index:end_index] for d in data]
 
 
