@@ -17,9 +17,14 @@ def main():
     parser.add_argument('--model_mode', type=str, default='SO') 
     parser.add_argument('--eval_interval', type=int, default=100)
     parser.add_argument('--model_type', type=str, default='DANN')
+    parser.add_argument('--checkpoint_dir', type=str, default='./checkpoint')
+
 
     args = parser.parse_args()
     print(args)
+
+    if not os.path.exists(args.checkpoint_dir):
+        os.mkdir(args.checkpoint_dir)
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
     # If you would like tf to automatically choose an existing and supported device to run the operations in case the specified one does not exists, set allow_soft_placement to True

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 from tensorflow.python.framework import ops
 
 class FlipGradient:
@@ -19,7 +20,7 @@ class FlipGradient:
         '''
         @ops.RegisterGradient(custom_grad)
         def _flip_gradient(op, grad):
-            return [tf.neg(grad) * 1.0]
+            return [tf.negative(grad) * 1.0]
 
         g = tf.get_default_graph()
         '''
@@ -39,18 +40,19 @@ def conv2d(inp, output_dim, filter_len, stride, name=None, activation=None):
         weight = tf.get_variable('weight', [filter_len, filter_len, inp.get_shape()[-1], output_dim], initializer=tf.truncated_normal_initializer(stddev=0.02))
         # padding=SAME outputs same shape of input when stride is 1
         convolution = tf.nn.conv2d(inp, weight, strides=[1,stride, stride, 1], padding='SAME')
-        bias = tf.get_varaible('bias', [output_dim], initializer=tf.constant_initializer(0))
+        bias = tf.get_variable('bias', [output_dim], initializer=tf.constant_initializer(0))
         outputs = tf.add(convolution, bias)
         if activation:
             outputs = activation(outputs)
         return outputs
 
 
-def fc(inp, output_dim, name=None, activation=None):
+def fc(inp_, output_dim, name=None, activation=None):
     with tf.variable_scope(name or 'fc'):
         weight = tf.get_variable('weight', [inp_.get_shape()[-1], output_dim], initializer=tf.truncated_normal_initializer(stddev=0.02))
         bias = tf.get_variable('bias', [output_dim], initializer=tf.constant_initializer(0))
-        outputs = tf.add(weight, bias)
+	weighted_sum = tf.matmul(inp_, weight)
+        outputs = tf.add(weighted_sum, bias)
         if activation:
             outputs = activation(outputs)
         return outputs

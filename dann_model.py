@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import utils
+import os
 import pickle
 
 class DANN_Model():
@@ -43,7 +44,7 @@ class DANN_Model():
         # Image placeholder
         self.x = tf.placeholder(tf.float32, [None, 28,28,3])
         # Label placeholder(one-hot)
-        self.label = tf.placeholder(tf.float32, [None, 10])
+        self.label = tf.placeholder(tf.float32, [None, self.args.num_classes])
         # Domain placeholder(source, target)
         self.domain = tf.placeholder(tf.int32, [None, 2])
         self.is_training = tf.placeholder(tf.bool, [])
@@ -74,13 +75,13 @@ class DANN_Model():
             # Probability for correctly predicting label
             prob = tf.nn.softmax(logits)
             # one-hot encoded label
-            cross_ent_loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=source_label)
+            cross_ent_loss = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.classify_label)
 
         with tf.variable_scope('Domain_Discriminator'):
             # Flip the gradient when back-propagating
             flip_op_feature = self.flip_gradient(self.feature)
 
-            fc1_d = utils.fc(flip_op_features, output_dim=100, name='fc1', activation=tf.nn.relu)
+            fc1_d = utils.fc(flip_op_feature, output_dim=100, name='fc1', activation=tf.nn.relu)
             fc2_d = utils.fc(fc1_d, output_dim=50, name='fc2', activation=tf.nn.relu)
             logits_d = utils.fc(fc2_d, output_dim=2, name='fc3', activation=None)
 
@@ -95,10 +96,9 @@ class DANN_Model():
 
         self.regular_train_op = tf.train.AdamOptimizer(self.args.learning_rate).minimize(self.classify_loss)
         self.dann_train_op = tf.train.AdamOptimizer(self.args.learning_rate).minimize(self.total_loss)
-
         # tf.equal(x,y) returns boolean, true if x==y
-        self.label_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.classify_label, axis=1), tf.argmax(prob, axis=1))), tf.float32)
-        self.domain_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.domain, axis=1), tf.argmax(prob_d, axis=1))), tf.float32)
+        self.label_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.classify_label, axis=1), tf.argmax(prob, axis=1)), tf.float32))
+        self.domain_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.domain, axis=1), tf.argmax(prob_d, axis=1)), tf.float32))
 
         self.saver = tf.train.Saver(max_to_keep=5)
 
@@ -118,7 +118,7 @@ class DANN_Model():
         for epoch in range(self.args.num_epoch):
             # Source only, domain data is not necessary
             if self.args.model_mode == 'SO':
-                source_x, source_label = source_only_batch,next()
+                source_x, source_label = source_only_batch.next()
                 source_x = (source_x - self.pixel_mean)/255
                 feed_dict = {self.x:source_x, self.label:source_label, self.is_training:True}
                 _, loss_, label_acc = self.sess.run([self.regular_train_op, self.classify_loss, self.label_accuracy], feed_dict=feed_dict)
@@ -137,7 +137,24 @@ class DANN_Model():
             
 
     def evaluate(self):
+        self.mnist_test = (self.mnist_test - self.pixel_mean) / 255
+        self.mnistm_test = (self.mnistm_test - self.pixel_mean) / 255
         source_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:self.mnist_test, self.label:self.mnist.test.labels, self.is_training:False})
-        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:self.mnintm_test, self.label:self.mnist.test.labels, self.is_training:False})
+        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:self.mnistm_test, self.label:self.mnist.test.labels, self.is_training:False})
         print('Source domain accuracy: %3.4f, Target domain accuracy: %3.4f' % (source_acc, target_acc))
+
+
+    def load(self):
+        checkpoint_path = os.path.join(self.args.checkpoint_dir, self.model_dir)
+        ckpt = tf.train.get_checkpoint_state(checkpoint_path)
+        if ckpt and ckpt.model_checkpoint_path:
+            ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+            self.saver.restore(self.sess, os.path.join(checkpoint_path, ckpt_name))
+            return True
+        else:
+            return False 
+  
+    @property
+    def model_dir(self):
+        return '{}_{}batch'.format(self.args.model_type, self.args.batch_size) 
 
