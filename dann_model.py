@@ -122,7 +122,7 @@ class DANN_Model():
                 src_x = (src_x - self.pixel_mean)/255
                 feed_dict = {self.x:src_x, self.label:src_label, self.is_training:True}
                 _, loss_, label_acc = self.sess.run([self.regular_train_op, self.classify_loss, self.label_accuracy], feed_dict=feed_dict)
-            else:
+            elif self.args.model_mode == 'DA':
                 s_x, s_label = source_batch.next()
                 t_x, t_label = target_batch.next()
     
@@ -131,6 +131,8 @@ class DANN_Model():
                 data_label = np.vstack([s_label, t_label])
                 feed_dict = {self.x:data_x, self.label:data_label, self.domain:domain_label, self.is_training:True}
                 _, loss_, label_acc, domain_acc = self.sess.run([self.dann_train_op, self.total_loss, self.label_accuracy, self.domain_accuracy], feed_dict=feed_dict)
+            else:
+                raise Exception('Not supported mode')
           
             print('Epoch %d, label accuracy: %3.4f, loss: %3.4f' % (epoch+1, label_acc, loss_))             
 
