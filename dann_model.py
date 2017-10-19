@@ -5,19 +5,14 @@ import os
 import pickle
 
 class DANN_Model():
-    def __init__(self, args, sess, name=None):
+    def __init__(self, args, sess, name=None, mnist=None):
         self.args = args
         self.sess = sess
         if name is not None:
             self.name = name
-        
-        if self.args.model_domain == 'MNIST':
-            '''
-                Loading MNIST 
-            '''
-            from tensorflow.examples.tutorials.mnist import input_data
-            # mnist is 28*28 grayscale images having values between 0~1
-            self.mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+       
+        if mnist is not None: 
+            self.mnist = mnist
             # images > 0 returns boolean, True if element is larger than 0
             # Make 0 or 255, shape of (55000,28,28,1)
             mnist_train = (self.mnist.train.images>0).reshape(55000,28,28,1).astype(np.float32)*255
