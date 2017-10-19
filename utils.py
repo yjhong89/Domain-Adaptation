@@ -69,6 +69,7 @@ def batch_generator(data, batch_size):
         end_index = (batch_count+1) * batch_size
         batch_count += 1
         # Use Generator and yield grammer in python for large dataset
+        # Passing batches when next() is called
         yield [d[start_index:end_index] for d in shuffled_data]
 
 
