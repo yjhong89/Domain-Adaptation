@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--gp', type=str2bool, default='n')
     parser.add_argument('--use_bn', type=str2bool, default='f')
     parser.add_argument('--clip', type=float, default=0.01)
-    parser.add_argument('--weight_gan', type=float, default=1.0)
+    parser.add_argument('--weight_gan', type=float, default=0.5)
 
     args = parser.parse_args()
     print(args)

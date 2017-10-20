@@ -66,7 +66,7 @@ class WGAN_Model():
 
         self.generator_loss = -tf.reduce_mean(self.discriminator_fake)
         self.classify_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.classifier_logits, labels=self.label))
-        self.total_loss = self.args.weight_gan*self.discriminator_loss + self.classify_loss
+        self.total_loss = self.classify_loss - self.args.weight_gan*self.discriminator_loss 
 
         self.optimizer = tf.train.AdamOptimizer(self.args.learning_rate)
         d_grads = self.optimizer.compute_gradients(self.discriminator_loss, var_list=self.d_param)
