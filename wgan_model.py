@@ -62,7 +62,7 @@ class WGAN_Model():
             self.discriminator_loss = tf.reduce_mean(self.discriminator_fake - self.discriminator_real) + self.args.penalty_hyperparam * (self.gradient_norm - 1)
 
         else:
-            self.discriminator_loss = tf.reduce_mean(self.discriminator_fake - self.discriminator_real)
+            self.discriminator_loss = tf.reduce_mean(self.discriminator_real - self.discriminator_fake)
 
         self.generator_loss = -tf.reduce_mean(self.discriminator_fake)
         self.classify_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.classifier_logits, labels=self.label))
