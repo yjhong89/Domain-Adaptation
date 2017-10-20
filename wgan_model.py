@@ -62,7 +62,7 @@ class WGAN_Model():
             self.discriminator_loss = tf.reduce_mean(self.discriminator_fake - self.discriminator_real) + self.args.penalty_hyperparam * (self.gradient_norm - 1)
 
         else:
-            self.discriminator_loss = tf.reduce_mean(self.discriminator_real - self.discriminator_fake)
+            self.discriminator_loss = tf.reduce_mean(self.discriminator_fake - self.discriminator_real)
 
         self.generator_loss = -tf.reduce_mean(self.discriminator_fake)
         self.classify_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.classifier_logits, labels=self.label))
@@ -73,7 +73,7 @@ class WGAN_Model():
         for grad, vars in d_grads:
             if grad is not None:
                 pass
-        gc_grads = self.optimizer.compute_gradients(self.generator_loss, var_list=[self.g_param, self.c_param])
+        gc_grads = self.optimizer.compute_gradients(self.total_loss, var_list=[self.g_param, self.c_param])
         for grad, vars in gc_grads:
             if grad is not None:
                 pass
@@ -106,7 +106,7 @@ class WGAN_Model():
                 conv2 = utils.conv2d(conv1, output_dim=48, filter_len=5, stride=2, name='gen_wo_batch2', activation=tf.nn.relu)
                 conv3 = utils.conv2d(conv2, output_dim=64, filter_len=3, stride=1, name='gen_wo_batch3', activation=tf.nn.relu)
                 flatten = tf.reshape(conv3, [-1, np.prod(conv3.get_shape().as_list()[1:])])
-                features = utils.fc(flatten, output_dim=self.args.final_dim, name='fc', activation=tf.nn.relu)
+                features = utils.fc(flatten, output_dim=self.args.final_dim, name='fc', activation=tf.nn.tanh)
 
                 return features
 
@@ -154,7 +154,7 @@ class WGAN_Model():
                 disc_loss, _ = self.sess.run([self.discriminator_loss, self.d_optimizer], feed_dict=feed_dict)
                 if not self.args.gp:
                      self.sess.run(self.clipping_op)
-                print('%d/%d loss : %3.4f' % (train_critic_step+1, epoch+1, disc_loss))
+                print('[%d/%d] loss : %3.4f' % (train_critic_step+1, epoch+1, disc_loss))
             feed_dict = {self.source_x:s_x, self.target_x:t_x, self.label:s_label, self.is_train:True} 
             total_loss_, label_acc, _ = self.sess.run([self.total_loss, self.label_accuracy, self.gc_optimizer], feed_dict=feed_dict)
  
@@ -166,8 +166,8 @@ class WGAN_Model():
     def evaluate(self):
         m_test = (self.mnist_test - self.pixel_mean) / 255
         mm_test = (self.mnistm_test - self.pixel_mean) / 255
-        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.label:self.mnist.test.labels, self.is_train:True})
-        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_training:False})
+        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_train:True})
+        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_train:False})
         print('Source domain accuracy: %3.4f, Target domain accuracy: %3.4f' % (source_acc, target_acc))
  
     @property
