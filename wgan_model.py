@@ -166,8 +166,8 @@ class WGAN_Model():
     def evaluate(self):
         m_test = (self.mnist_test - self.pixel_mean) / 255
         mm_test = (self.mnistm_test - self.pixel_mean) / 255
-        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:m_test, self.label:self.mnist.test.labels, self.is_training:False})
-        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.x:mm_test, self.label:self.mnist.test.labels, self.is_training:False})
+        source_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.label:self.mnist.test.labels, self.is_train:True})
+        target_acc = self.sess.run(self.label_accuracy, feed_dict={self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_training:False})
         print('Source domain accuracy: %3.4f, Target domain accuracy: %3.4f' % (source_acc, target_acc))
  
     @property
