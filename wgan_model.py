@@ -47,11 +47,7 @@ class WGAN_Model():
         self.classify_prob = tf.nn.softmax(self.classifier_logits)
 
         self.d_param = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
-        for v in self.d_param:
-            print(v.op.name)
         self.g_param = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='generator')
-        for v in self.g_param:
-            print(v.op.name)
         self.c_param = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='classifier')
 
         if self.args.gp:
@@ -64,19 +60,13 @@ class WGAN_Model():
         else:
             self.discriminator_loss = tf.reduce_mean(self.discriminator_fake - self.discriminator_real)
 
-        self.generator_loss = -tf.reduce_mean(self.discriminator_fake)
         self.classify_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.classifier_logits, labels=self.label))
         self.total_loss = self.classify_loss - self.args.weight_gan*self.discriminator_loss 
 
         self.optimizer = tf.train.AdamOptimizer(self.args.learning_rate)
+
         d_grads = self.optimizer.compute_gradients(self.discriminator_loss, var_list=self.d_param)
-        for grad, vars in d_grads:
-            if grad is not None:
-                pass
         gc_grads = self.optimizer.compute_gradients(self.total_loss, var_list=[self.g_param, self.c_param])
-        for grad, vars in gc_grads:
-            if grad is not None:
-                pass
         # Discriminator gradient
         self.d_optimizer = self.optimizer.apply_gradients(d_grads)
         # Generator gradient

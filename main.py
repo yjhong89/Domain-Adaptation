@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_epoch', type=int, default=50000)
-    parser.add_argument('--train_critic', type=int, default=5)
+    parser.add_argument('--train_critic', type=int, default=1)
     parser.add_argument('--final_dim', type=int, default=256)
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--learning_rate', type=float, default=0.005)
@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--gp', type=str2bool, default='n')
     parser.add_argument('--use_bn', type=str2bool, default='f')
     parser.add_argument('--clip', type=float, default=0.01)
-    parser.add_argument('--weight_gan', type=float, default=0.5)
+    parser.add_argument('--weight_gan', type=float, default=0.3)
 
     args = parser.parse_args()
     print(args)
