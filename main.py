@@ -24,7 +24,7 @@ def main():
     parser.add_argument('--use_bn', type=str2bool, default='f')
     parser.add_argument('--clip', type=float, default=0.01)
     parser.add_argument('--weight_gan', type=float, default=0.3)
-    parser.add_argument('--aim', type=float, default-0.7)
+    parser.add_argument('--aim', type=float, default=0.7)
 
     args = parser.parse_args()
     print(args)
