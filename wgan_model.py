@@ -149,7 +149,9 @@ class WGAN_Model():
             total_loss_, label_acc, _ = self.sess.run([self.total_loss, self.label_accuracy, self.gc_optimizer], feed_dict=feed_dict)
  
             if np.mod(epoch+1, self.args.eval_interval) == 0:
-                self.evaluate()
+                s_acc, t_acc = self.evaluate()
+                if t_acc > self.args.aim:
+                    break
 
             print('Epoch %d, total_loss: %3.4f, label_accuracy: %3.4f' % (epoch+1, total_loss_, label_acc))
 
@@ -159,6 +161,7 @@ class WGAN_Model():
         source_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_train:True})
         target_acc = self.sess.run(self.label_accuracy, feed_dict={self.source_x:m_test, self.target_x:mm_test, self.label:self.mnist.test.labels, self.is_train:False})
         print('Source domain accuracy: %3.4f, Target domain accuracy: %3.4f' % (source_acc, target_acc))
+        return source_acc, target_acc
  
     @property
     def model_dir(self):
