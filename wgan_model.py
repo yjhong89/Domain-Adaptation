@@ -74,6 +74,8 @@ class WGAN_Model():
         self.label_accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(self.label, axis=1), tf.argmax(self.classify_prob, axis=1)), tf.float32))
         self.clipping_op = [disc_param.assign(tf.clip_by_value(disc_param, -self.args.clip, self.args.clip)) for disc_param in self.d_param]
 
+        self.regular_train_op = self.optimizer.minimize(self.classify_loss)
+
         self.saver = tf.train.Saver(max_to_keep=5)
 
     def generator(self, inp_, use_batchnorm, reuse, training=True):
@@ -133,6 +135,19 @@ class WGAN_Model():
 
         source_batch = utils.batch_generator([self.mnist_train, self.mnist.train.labels], self.args.batch_size)
         target_batch = utils.batch_generator([self.mnistm_train, self.mnist.train.labels], self.args.batch_size)
+
+        for step in range(self.args.pre_train):
+            pre_s_x, pre_s_label = source_batch.next()
+            pre_t_x, pre_t_label = target_batch.next()
+            pre_s_x = (pre_s_x - self.pixel_mean) /255
+            pre_t_x = (pre_t_x - self.pixel_mean) /255
+
+            feed_dict = {self.source_x:pre_s_x, self.label:pre_s_label, self.target_x:pre_t_x, self.is_train:True}
+            _, label_acc = self.sess.run([self.regular_train_op, self.label_accuracy], feed_dict=feed_dict)
+            print('%d steps source accuracy %3.4f' % (step+1, label_acc))
+            if label_acc > 0.99:
+                break
+            
 
         for epoch in range(self.args.num_epoch):
             for train_critic_step in range(self.args.train_critic):
